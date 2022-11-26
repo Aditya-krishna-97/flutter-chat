@@ -27,7 +27,7 @@ class _MyAppState extends State<MyApp> {
     await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
     print("Disabled screenshots");
   }
-  checkpremission_opencamera() async{
+  checkpremissions() async{
     var cameraStatus = await Permission.camera.status;
     var microphoneStatus = await Permission.microphone.status;
     var alwaysLocationStatus = await Permission.locationAlways.status;
@@ -51,7 +51,6 @@ class _MyAppState extends State<MyApp> {
       print("Camera Permission granted");
     }
     else{
-
       print("Camera permission is $cameraStatus");
       print("Microphone status is $microphoneStatus");
       print("Location status is $alwaysLocationStatus");
@@ -71,7 +70,7 @@ class _MyAppState extends State<MyApp> {
    // print("Inserting data into local database");
    // DBHelper.insert('places', {'id':now.toString(),'title':title});
     super.initState();
-    checkpremission_opencamera();
+    checkpremissions();
   }
 
 

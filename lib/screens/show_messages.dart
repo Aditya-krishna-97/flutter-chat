@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:messenger/screens/deleted_messages.dart';
+import 'package:messenger/screens/messages_settings.dart';
 import 'package:messenger/screens/saved_messages.dart';
 
 class InboxMessages extends StatefulWidget {
@@ -134,6 +135,7 @@ class _InboxMessagesState extends State<InboxMessages> {
               }
               if(itemIdentifier == 'messagessettings'){
                 print("Show Messages settings");
+                Navigator.push(context, MaterialPageRoute(builder: (context) => MessagesSettings()));
               }
             },
           ),

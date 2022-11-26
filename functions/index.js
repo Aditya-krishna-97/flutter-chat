@@ -6,6 +6,7 @@ admin.initializeApp();
 exports.myFunction = functions.firestore
     .document("chats/{message}")
     .onCreate((snapshot, context) => {
+    console.log(snapshot.data());
       return admin.messaging().sendToTopic("chats", {
         notification: {
           title: snapshot.data().username,

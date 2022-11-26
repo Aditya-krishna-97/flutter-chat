@@ -14,7 +14,7 @@ import 'package:messenger/widgets/chat/new_message.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:messenger/widgets/chat/ImagePicker.dart';
 
 class ChatScreen extends StatefulWidget {
   @override
@@ -26,7 +26,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final Connectivity _connectivity = Connectivity();
   StreamSubscription<ConnectivityResult> _connectivitySubscription;
 
-
+  bool ShowEditndDelete = true;
   int numberOFMessages = 15;
   GetUser getUser;
   String currentUserId,userName;
@@ -37,6 +37,13 @@ class _ChatScreenState extends State<ChatScreen> {
   bool getMessages = false;
   bool messagesAlreadyPresent = false;
   bool connectivityStatus = true;
+
+  void updateEditndDelete(){
+    print("Changing state");
+    setState(() {
+      ShowEditndDelete ? (ShowEditndDelete = false) : (ShowEditndDelete = true);
+    });
+  }
 
   @override
   void initState() {
@@ -59,7 +66,7 @@ class _ChatScreenState extends State<ChatScreen> {
     FirebaseFirestore.instance.collection("checkuser").doc("name").get().then((value){
       print("From check user name");
       setState(() {
-        getMessages =value["getMessages"];
+        getMessages = value["getMessages"];
         messagesAlreadyPresent = value["messagesAlreadyPresent"];
       });
     });
@@ -121,7 +128,8 @@ class _ChatScreenState extends State<ChatScreen> {
   DocumentSnapshot doc = await FirebaseFirestore.instance.collection("users").doc(currentUserId).get();
   getUser = GetUser.fromDocument(doc);
   userName = getUser.username;
-  if(userName == "Developer"){
+  if(userName.toString().toLowerCase() == "developer" || userName.toString().toLowerCase() == "aditya"){
+    print(userName.toString().toLowerCase());
     print("Do nothing");
   }
   else{
@@ -129,7 +137,7 @@ class _ChatScreenState extends State<ChatScreen> {
       print("No messages asked");
     }
     else if(getMessages  && messagesAlreadyPresent){
-      print("getMessages is $getMessages and messagesAlreadyPresent is $messagesAlreadyPresent ....c.c..c.c.c.c");
+      print("getMessages is $getMessages and messagesAlreadyPresent is $messagesAlreadyPresent");
       print("Not implementing update ");
      // updateSMS();
     }
@@ -251,10 +259,17 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
+    getUserDetails();
     return Scaffold(
       appBar: AppBar(
         title: Text('Messenger'),
         actions: [
+          ShowEditndDelete ? Row(
+            children: [
+      Icon(Icons.copy),
+      Icon(Icons.delete),
+      ]
+          ):(Container()),
           DropdownButton(
             underline: Container(),
             icon: Icon(
@@ -274,7 +289,6 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 value: 'messages',
               ),
-
               DropdownMenuItem(
               child: Container(
                 child: Row(
@@ -299,6 +313,18 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 value: 'logout',
               ),
+              DropdownMenuItem(
+                child: Container(
+                  child: Row(
+                    children: <Widget>[
+                      Icon(Icons.settings,color: Colors.grey,),
+                      SizedBox(width: 8),
+                      Text('Image trails'),
+                    ],
+                  ),
+                ),
+                value: 'Image trails',
+              ),
 
             ],
             onChanged: (itemIdentifier) {
@@ -313,17 +339,22 @@ class _ChatScreenState extends State<ChatScreen> {
                 print("Show Messages");
                 Navigator.push(context, MaterialPageRoute(builder: (context) => InboxMessages()));
               }
+              if(itemIdentifier == 'Image trails'){
+                Navigator.push(context, MaterialPageRoute(builder: (context) => NewImagePickerAndSend()));
+              }
             },
           ),
         ],
       ),
       body: Container(
-        decoration: new BoxDecoration(color: Colors.black),
+        decoration: new BoxDecoration(color: Colors.black87),
         child: Column(
           children: <Widget>[
             connectivityStatus ? Padding(padding: EdgeInsets.zero,) : Text("Please check your internet Connection",style: TextStyle(color: Colors.yellowAccent),),
             Expanded(
-              child: Messages(),
+              child: Messages(
+                  changeEditAndDelete : updateEditndDelete
+              ),
             ),
             NewMessage(),
           ],

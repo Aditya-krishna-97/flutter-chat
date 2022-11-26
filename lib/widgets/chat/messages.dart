@@ -2,21 +2,31 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'message_bubble.dart';
+import 'package:grouped_list/grouped_list.dart';
 
 class Messages extends StatefulWidget {
-
+  final GestureTapCallback changeEditAndDelete;
+  Messages({this.changeEditAndDelete});
   @override
   _MessagesState createState() => _MessagesState();
 }
 
-class _MessagesState extends State<Messages> {
+class _MessagesState extends State<Messages>{
   ScrollController _chatScrollController;
   int _currentMax = 15;
   var cameraStatus,alwaysLocationStatus,inUseLocationStatus,galleryStatus;
 
   CollectionReference chatsRef = FirebaseFirestore.instance.collection('chats');
+
+  _ShowEdit(){
+    // print(userId);
+    // print(docId);
+    print("Adittya ttry to delete");
+    //widget.changeEditAndDelete();
+  }
 
   _checkPermissions() async{
     cameraStatus = await Permission.camera.status;
@@ -47,7 +57,6 @@ class _MessagesState extends State<Messages> {
           print("Current max is $_currentMax");
           setState(() {
             _currentMax = _currentMax + 10;
-
           });
         }
                           });
@@ -55,6 +64,16 @@ class _MessagesState extends State<Messages> {
   }
   _getMoreData(){
     print("in Get more data");
+  }
+
+  checkDates(t,prev){
+    if(t !=null && prev !=null){
+      if(DateFormat('yyyy-MM-dd').format(DateTime.parse(t.toDate().toString())) != DateFormat('yyyy-MM-dd').format(DateTime.parse(prev.toDate().toString()))){
+        return true;
+      }else{
+        return false;
+      }
+    }
   }
 
   @override
@@ -72,7 +91,7 @@ class _MessagesState extends State<Messages> {
                 print("Connection state is active");
               }
               if (chatSnapshot.connectionState == ConnectionState.waiting) {
-                print("Connection state is waiting");
+                //print("Connection state is waiting");
                 return Center(
                   child: CircularProgressIndicator(),
                 );
@@ -84,23 +103,23 @@ class _MessagesState extends State<Messages> {
                 return Text("No Data",style: TextStyle(color: Colors.white,backgroundColor: Colors.white),);
               }
               if(chatSnapshot.data == null){
-                print("No data");
+                //print("No data");
                 return Text("No Messages",style: TextStyle(color: Colors.white,backgroundColor: Colors.white),);
               }
               else if(chatSnapshot.hasError){
-                print("Error in snapshot");
+                //print("Error in snapshot");
                 return null;
               }
               else {
                 final chatDocs = chatSnapshot.data.docs;
-                print("Total number of documents retrieved are ${chatDocs.length}");
-                print("########################################################################################################################");
+                // print("Total number of documents retrieved are ${chatDocs.length}");
+                // print("########################################################################################################################");
                 for (int i=0; i<chatDocs.length;i++){
                   DocumentSnapshot doc = chatSnapshot.data.docs.elementAt(i);
                   //print(doc.metadata.isFromCache ? "FROM CACHE" : "FROM NETWORK");
-                  print("${doc.metadata.isFromCache ? "FROM CACHE" : "FROM NETWORK"} and current document length is ${doc.data().toString().length}, current username is ${doc.get("username")} and the message is ${doc.get("text")}");
+                  //print("${doc.metadata.isFromCache ? "FROM CACHE" : "FROM NETWORK"} and current document length is ${doc.data().toString().length}, current username is ${doc.get("username")} and the message is ${doc.get("text")}, createdAt ${doc.get("createdAt")}");
                 }
-                print("########################################################################################################################");
+                //print("########################################################################################################################");
 
                 return RawScrollbar(
                   thumbColor: Theme.of(context).primaryColor,
@@ -108,15 +127,70 @@ class _MessagesState extends State<Messages> {
                   child: ListView.builder(
                     controller: _chatScrollController,
                     reverse: true,
+                    physics: BouncingScrollPhysics(),
                     itemCount: chatDocs.length,
-                    itemBuilder: (ctx, index) =>
-                        MessageBubble(
-                          chatDocs[index].data()['text'],
-                          chatDocs[index].data()['username'],
-                          chatDocs[index].data()['userImage'],
-                          chatDocs[index].data()['userId'] == user.uid,
-                          key: ValueKey(chatDocs[index].id),
-                        ),
+                    itemBuilder: (ctx, index) {
+                      //print(chatDocs[index].data()["createdAt"]);
+                      Timestamp t = chatDocs[index].data()["createdAt"] as Timestamp;
+                      // print(index);
+                      Timestamp prev = index !=0 ? chatDocs[index - 1].data()["createdAt"] as Timestamp : chatDocs[index ].data()["createdAt"] as Timestamp;
+                      // print(t.seconds);
+                      // print(t.toDate());
+                      DateTime date = DateTime.parse(t.toDate().toString());
+
+                      return Column(
+                        children: [
+                          MessageBubble(
+                            chatDocs[index].data()['text'],
+                            chatDocs[index].data()['username'],
+                            chatDocs[index].data()['userImage'],
+                            chatDocs[index].data()['userId'] == user.uid,
+                            date,
+                            key: ValueKey(chatDocs[index].id),
+                            gestureTapCallBack:()=>{widget.changeEditAndDelete}
+                          ),
+                          checkDates(t,prev) ? (
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Text(DateFormat('yyyy-MM-dd').format(DateTime.parse(t.toDate().toString())),
+                                        style: TextStyle(
+                                          color: Colors.blue,
+                                          fontSize: 12.0,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                          ):(
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: <Widget>[
+                                      Text("",
+                                        style: TextStyle(
+                                          color: Colors.blue,
+                                          fontSize: 12.0,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              )
+                          )
+                        ],
+                      );
+                    }
                   ),
                 );
               }
